@@ -56,10 +56,14 @@
 //     Added option for GPIO side hole in bottom or top
 //     Added showing GPIO pins with component drawing
 //
+
+use <rounded_box.scad>;
+
+
 // All parts are draw as default just disable the ones you don't want
 DRAWfull        = 0;
-DRAWtop         = 0;
-DRAWbottom      = 1;
+DRAWtop         = 1;
+DRAWbottom      = 0;
 DRAWtopinlet    = 0;
 DRAWbottominlet = 0;
 DRAWpcb         = 0;
@@ -91,7 +95,7 @@ toplogo     = true;
 toplogopc   = -1;            //  0   0  placement correction of logo
 toplogoxm   =  0;            //  3   6  leftmargin of logo
 toplogotm   =  -1;        // 12  15  topmargin of logo
-toplogohole = true;
+toplogohole = false;
 toplogosunken=false;              // true or false, no idea if this works on a reprap
 
 bottomframe = false;        // if false, underneath values determines how
@@ -103,7 +107,7 @@ bottomsupport = true;         // Added extra support locations for pcb
 bottomclick   = false;
 bottompcb    = false;		    // just a pcb holder without a top
 
-box_thickness = 3.0;            // minimum = 1.0
+box_thickness = 4.0;            // minimum = 1.0
 inside_h      = 16.5;           // 12.1 = lowprofile    16.5 is full height
 pcb_h         = 5.6;            // height needed for SD holder and solder points of pcb
 //pcb_h         = box_thickness+3.5;    // height needed for SD holder and solder points of pcb
@@ -479,56 +483,24 @@ module make_supports() {
     }
 }
 
-module rounded_bottom(length, rotation_z)
-{
-	translate([0, 0, corner_radius / 2 * 0.99])
-	{
-		rotate(a = rotation_z, v = [0, 0, 1])
-		{
-			rotate(a = 90, v = [0, 1, 0])
-			{
-				difference()
-				{
-					cube([corner_radius / 2, corner_radius / 2, length], center=false);
-					translate(v = [0, corner_radius / 2, 0])
-					{
-						cylinder(r = corner_radius / 2, h = length);
-					}
-				}
-			}
-		}
-	}	
-}
-
 // width,depth,height,boxthickness,ledgethickness
 module make_case(w,d,h,bt,lt) {
     dt=bt+lt;    // box+ledge thickness
     bt2=bt+bt;    // 2x box thickness
+    
     // Now we just substract the shape we have created in the four corners
-    			translate(v = [w + 0.01, -0.01, 0])
-			{
-				rounded_bottom(d, 270);
-			}
     color(CASEcolor) difference() {
-        cube([w,d,h], center=false);
         if (rounded) {
-            rounded_corner(-0.1,d+0.1, 0             ,-corner_radius,  corner_radius,-corner_radius);
-            rounded_corner(w+0.1,d+0.1, -corner_radius,-corner_radius, -corner_radius,-corner_radius);
-            rounded_corner(w+0.1,-0.1, -corner_radius,0             , -corner_radius, corner_radius);
-            rounded_corner(-0.1,-0.1, 0             ,0             ,  corner_radius, corner_radius);
-			translate(v = [0, -0.01, 0])
+            rounded_box(w, d, h + box_thickness, box_thickness);
+			translate(v = [0, 0, h])
 			{
-				rounded_bottom(w, 0);
-			}
-			translate(v = [w, d + 0.01, 0])
-			{
-				rounded_bottom(w, 180);
-			}
-			translate(v = [w + 0.01, -0.01, 0])
-			{
-				rounded_bottom(d, 90);
+				cube([w,d,thickness], center=false);
 			}
         }
+        else
+		{
+			cube([w,d,h], center=false);
+		}
         // empty inside, but keep a ledge for strength
         translate(v = [bt, bt, dt])   cube([w-bt2, d-bt2, h-(dt*2)], center = false);
         translate(v = [dt,dt,bt])     cube([w-(dt*2), d-(dt*2), h-bt2], center = false);
